@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/34236104/README.md)
 # CoTab
 
 **Shared expenses, shopping and chores for people who live together.**

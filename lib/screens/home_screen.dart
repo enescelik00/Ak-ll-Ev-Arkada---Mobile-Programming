@@ -1,0 +1,31 @@
+import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context)!;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(texts.appTitle),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              texts.homeWelcome,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8),
+            Text(texts.homeNoGroups),
+          ],
+        ),
+      ),
+    );
+  }
+}
