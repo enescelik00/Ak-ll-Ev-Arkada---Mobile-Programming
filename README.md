@@ -20,6 +20,7 @@ CoTab is a mobile app for student houses and travel groups. It brings shared spe
 ### Extended
 - [ ] **Receipt scanning (OCR):** read the date, total and VAT from Turkish market receipts, then review and correct before saving
 - [ ] **Item-level splitting:** assign each item on a receipt to one or more people
+- [ ] **QR invites:** join a group by scanning a QR code
 - [ ] **Debt simplification:** settle up with the minimum number of payments
 - [ ] **Chore schedule:** rotating duties with reminder notifications
 - [ ] **Shared shopping list:** a bought item turns into an expense with one tap
@@ -39,11 +40,15 @@ The app is built in English with Turkish language support.
 | Layer | Technology |
 | --- | --- |
 | App | Flutter, Dart, Material 3 |
-| State management | Riverpod |
-| Local storage | SQLite via drift |
+| State management | StatefulWidget + setState |
+| Navigation | Navigator |
+| Local storage | SQLite via sqflite (plain SQL) |
 | Backend | Firebase Authentication, Cloud Firestore |
 | Receipt scanning | Google ML Kit Text Recognition (on-device) |
-| Notifications | Firebase Cloud Messaging, local notifications |
+| Notifications | Local notifications (flutter_local_notifications) |
+| Languages | English (default) and Turkish, via Flutter's built-in localization |
+
+The code is kept deliberately simple so that every team member can read and explain every file. The project rules are in [CLAUDE.md](CLAUDE.md).
 
 ## How It Works
 
@@ -92,7 +97,11 @@ We use a simple branch-and-pull-request workflow:
 - `main` is protected; all changes go through a pull request reviewed by at least one other team member.
 - Branch names: `feature/receipt-scan`, `fix/balance-rounding`, `docs/readme`
 - Commit messages start with a type: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`
+- Every pull request adds a short entry to [docs/CHANGELOG.md](docs/CHANGELOG.md).
+- Run `flutter analyze` and `flutter test` before opening a pull request.
 - Tasks are tracked in GitHub Issues.
+
+Project documents, including the [roadmap](docs/Road_Map.md), are in the [docs/](docs/) folder.
 
 ---
 
@@ -100,6 +109,6 @@ We use a simple branch-and-pull-request workflow:
 
 | Member | Role | Focus |
 | --- | --- | --- |
-| Enes Çelik | Project Manager | Groups, expenses, splitting and debt simplification |
-| Enes Yahya Bodur | Tech Lead | Project structure, camera, OCR and receipt review; code review and testing |
+| Enes Çelik | Project Manager | Project setup, groups, expenses, splitting and debt simplification |
+| Enes Yahya Bodur | Tech Lead | Camera, OCR and receipt review; code review and testing |
 | Ahmet Anıl Çay | Public Relations | Firebase, authentication, sync, notifications, chores and shopping list |

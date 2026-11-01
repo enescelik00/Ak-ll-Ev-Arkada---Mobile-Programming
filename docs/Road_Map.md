@@ -1,6 +1,6 @@
 # CoTab — Yol Haritası
 
-Nov 1, 2026 · @Enes
+Son güncelleme: 1 Kasım 2026 · Enes Çelik
 
 ## Özet ve takvim
 
@@ -25,8 +25,8 @@ Bu tarihler ekip içi takip içindir. Hocaya giden dokümanda aşamalar yalnızc
 
 | Katman | Özellikler | Hedef |
 | --- | --- | --- |
-| Çekirdek sürüm (MVP) | Kayıt/giriş; grup oluşturma ve davet kodu/QR ile katılma; manuel harcama ekleme; eşit, yüzde ve tutar bazlı bölüştürme; kişi bakiyeleri; harcama geçmişi; SQLite'ta offline kayıt + sunucuya senkron | 22 Kasım |
-| Genişletilmiş sürüm | Fiş tarama (OCR) ve kalem bazlı bölüştürme; borç sadeleştirme ve "ödeme yaptım" kaydı; nöbet çizelgesi (rotasyon + hatırlatma bildirimi); ortak alışveriş listesi (gerçek zamanlı); alınan ürünün tek dokunuşla harcamaya dönüşmesi; Türkçe dil seçeneği | 25 Aralık |
+| Çekirdek sürüm (MVP) | Kayıt/giriş; grup oluşturma ve davet koduyla katılma; manuel harcama ekleme; eşit, yüzde ve tutar bazlı bölüştürme; kişi bakiyeleri; harcama geçmişi; SQLite'ta offline kayıt + sunucuya senkron | 22 Kasım |
+| Genişletilmiş sürüm | Fiş tarama (OCR) ve kalem bazlı bölüştürme; QR ile gruba katılma; borç sadeleştirme ve "ödeme yaptım" kaydı; nöbet çizelgesi (rotasyon + hatırlatma bildirimi); ortak alışveriş listesi (gerçek zamanlı); alınan ürünün tek dokunuşla harcamaya dönüşmesi; Türkçe dil seçeneği | 25 Aralık |
 | Opsiyonel | Aylık harcama grafikleri ve kategori istatistikleri; seyahat için döviz desteği; tekrarlayan harcamalar (kira, internet); karanlık mod; Play Store kapalı test yayını | Zaman kalırsa |
 
 **Splitwise'tan farkımız (sunumda öne çıkarılacak):**
@@ -39,33 +39,36 @@ Bu tarihler ekip içi takip içindir. Hocaya giden dokümanda aşamalar yalnızc
 
 ## Teknik mimari
 
-Önerilen yapı offline-first: uygulama her zaman yerel SQLite veritabanından okur ve yazar, bir senkron servisi değişiklikleri arka planda sunucuya taşır. Böylece 6. maddedeki SQLite ve uzak sunucu şartlarının ikisi de gerçek bir ihtiyaçla karşılanır.
+Kod öğrenci seviyesinde ve sade tutulur: ek mimari katmanı, kod üretimi gerektiren paket ve gereksiz soyutlama yok. Uygulama her zaman yerel SQLite veritabanından okur ve yazar, Firebase değişiklikleri diğer üyelere taşır; böylece 6. maddedeki SQLite ve uzak sunucu şartlarının ikisi de karşılanır.
 
-| Katman | Flutter paketi / araç |
-| --- | --- |
-| Arayüz | Flutter + Material 3 |
-| Durum yönetimi | flutter\_riverpod |
-| Navigasyon | go\_router |
-| Yerel veritabanı | drift (SQLite üzerine, tip güvenli sorgular ve migration) |
-| Uzak sunucu | firebase\_auth, cloud\_firestore, firebase\_storage |
-| Fiş okuma | google\_mlkit\_text\_recognition (cihaz üstünde, internetsiz) |
-| Kamera ve kırpma | camera veya image\_picker + image\_cropper |
-| Bildirim | firebase\_messaging + flutter\_local\_notifications |
-| Ağ durumu | connectivity\_plus (bağlantı gelince senkronu tetikler) |
-| QR ile davet | qr\_flutter (üretme) + mobile\_scanner (okuma) |
-| Grafikler (opsiyonel) | fl\_chart |
-| Test | flutter\_test, mocktail |
+| Katman | Kullanılan | Not |
+| --- | --- | --- |
+| Arayüz | Flutter + Material 3 | Ekranlar lib/screens, ortak parçalar lib/widgets altında |
+| Durum yönetimi | StatefulWidget + setState | Ek paket yok |
+| Navigasyon | Navigator.push | Flutter'ın kendi yöntemi |
+| Yerel veritabanı | sqflite + path, düz SQL | DatabaseHelper sınıfı lib/services altında |
+| Uzak sunucu | firebase\_auth, cloud\_firestore | Ahmet Anıl'ın branch'inde eklenecek |
+| Fiş okuma | google\_mlkit\_text\_recognition | Faz 2'de eklenecek |
+| Kamera | image\_picker | Faz 1'de ham metin denemesi için |
+| Bildirim | flutter\_local\_notifications | Nöbet hatırlatmaları, Faz 2 |
+| QR ile davet | qr\_flutter (üretme) + mobile\_scanner (okuma) | Faz 2'de eklenecek |
+| Dil desteği | flutter\_localizations + intl, ARB dosyaları | İngilizce varsayılan, Türkçe ikinci dil |
+| Test | flutter\_test | Ana ekran testi hazır |
 
-Proje Flutter (Dart) ile geliştirilecek; tek kod tabanından Android ve iOS çıkar. Firestore'un kendi offline önbelleği olsa da veri kaynağı drift (SQLite) olarak kalmalı; 6. madde böylece açıkça karşılanır. Final sunumunda kaynak koddan soru geleceği için her üye kendi modülündeki paketlerin nasıl çalıştığını açıklayabilmeli.
+Kural: yukarıdakiler dışında paket eklemeden önce ekipte konuşulur. Klasör yapısı: lib/models, lib/screens, lib/services, lib/widgets, lib/utils. Kurallar depodaki CLAUDE.md'de, değişiklikler CHANGELOG'da.
+
+Firestore'un kendi offline önbelleği olsa da veri kaynağı SQLite olarak kalır. Tutarlar kuruş cinsinden int tutulur. ID'ler TEXT tipindedir: users tablosunda Firebase Auth'un verdiği uid, diğer tablolarda Firestore'un ürettiği ID'ler kullanılır (`collection(...).doc().id` internet yokken de çalışır). Fiş görselleri şimdilik yalnızca fişi tarayan kişinin telefonunda saklanır, buluta yüklenmez; diğer üyeler tutarı ve kalemleri görür. Final sunumunda kaynak koddan soru geleceği için her üye kendi modülündeki kodu baştan sona açıklayabilmeli.
 
 **Veri modeli (SQLite tabloları):**
+
+sync\_queue dışındaki her tabloda ayrıca iki kolon bulunur: updated\_at (son değişiklik zamanı) ve deleted\_at (yumuşak silme; boşsa kayıt silinmemiştir). İkisi de INTEGER, milisaniye cinsinden (`DateTime.now().millisecondsSinceEpoch`).
 
 | Tablo | Temel alanlar |
 | --- | --- |
 | users | id, ad, e-posta, avatar |
 | groups | id, ad, tür (ev/seyahat), para birimi, davet kodu |
 | group\_members | group\_id, user\_id, rol, katılma tarihi |
-| expenses | id, group\_id, ödeyen, tutar, kategori, tarih, fiş görseli, bölüştürme tipi |
+| expenses | id, group\_id, ödeyen, tutar, kategori, tarih, fiş görseli (telefondaki dosya yolu), bölüştürme tipi |
 | expense\_items | id, expense\_id, ürün adı, tutar (fişten gelen kalemler) |
 | expense\_shares | expense\_id veya item\_id, user\_id, pay tutarı |
 | settlements | id, group\_id, ödeyen, alan, tutar, tarih |
@@ -78,7 +81,7 @@ Proje Flutter (Dart) ile geliştirilecek; tek kod tabanından Android ve iOS ç�
 
 - **Borç sadeleştirme:** herkesin net bakiyesini hesapla, en çok borçlu olanla en çok alacaklı olanı eşleştir, biri sıfırlanana kadar tekrarla. n kişide en fazla n−1 ödeme çıkar. Birim testi yazın; sunumda gösterilecek parça bu.
 - **Fiş ayrıştırma:** OCR metnini satırlara böl, "TOPLAM", "KDV", tarih ve fiyat desenlerini düzenli ifadelerle yakala, sonucu düzenlenebilir bir onay ekranında göster.
-- **Senkron çakışması:** harcamalar ekleme-ağırlıklı olduğu için "son yazan kazanır" ve silmede yumuşak silme (deleted\_at) yeterli.
+- **Senkron çakışması:** harcamalar ekleme-ağırlıklı olduğu için "son yazan kazanır" (updated\_at'i büyük olan) ve silmede yumuşak silme (deleted\_at) yeterli.
 
 ## Ekip organizasyonu
 
@@ -86,21 +89,17 @@ Her üye bir yönetim rolü ve bir kod modülü üstlenir; böylece herkesin kod
 
 | Üye | Yönetim rolü | Kod modülü | Destek verdiği alan |
 | --- | --- | --- | --- |
-| Enes Çelik | Proje yöneticisi (yürütücü) | Grup ve harcama modülü, veri modeli ve SQLite, bölüştürme ve borç sadeleştirme algoritması | Haftalık rapor, sprint planı, performans kaydı |
-| Enes Yahya Bodur | Teknik lider (QA) | Flutter proje yapısı; fiş tarama: kamera, OCR, ayrıştırma, onay ekranı, kalem bazlı paylaşım | Kod incelemesi, test, sürüm (APK) çıkarma |
+| Enes Çelik | Proje yöneticisi (yürütücü) | Flutter proje iskeleti; grup ve harcama modülü, veri modeli ve SQLite, bölüştürme ve borç sadeleştirme algoritması | Haftalık rapor, sprint planı, performans kaydı |
+| Enes Yahya Bodur | Teknik lider (QA) | Fiş tarama: kamera, OCR, ayrıştırma, onay ekranı, kalem bazlı paylaşım | Kod incelemesi, test, sürüm (APK) çıkarma |
 | Ahmet Anıl Çay | Halkla ilişkiler sorumlusu | Backend ve senkron: Firebase, auth, bildirimler; nöbet ve alışveriş listesi | Blog, YouTube, LinkedIn paylaşımları |
 
 **Performans kaydı:** PM her hafta GitHub Issues üzerinden her üyenin aldığı ve kapattığı görevleri, PR sayısını ve gecikmeleri bir tabloya işler. Dönem sonunda GitHub Insights (Contributors) ekran görüntüsüyle birlikte rapora eklenir.
 
-&#91;embedded content: organizasyon şeması · 3 üye\]
-
-Hocaya giden dokümandaki organizasyon şemasıyla aynı dağılım.
+Hocaya giden dokümandan iki fark var ve ilk haftalık raporda bildirilecek: proje iskeletini Enes Yahya yerine Enes Çelik kurdu; teknik yığın sadeleştirildi (Riverpod → setState, drift → sqflite, FCM yerine yalnızca yerel bildirimler).
 
 ## Faz faz yol haritası
 
 Beş faz ve üç kapı var: çekirdek sürüm (22 Kasım), özellik dondurma (25 Aralık) ve final teslimi. Bir kapıdan geçmeden sonraki faza yeni özellik eklenmez.
-
-&#91;embedded content: yol haritası · 5 faz, 3 kapı\]
 
 Çekirdek sürüm ilk ve en kritik kapı: vize döneminde tempo düşük olacağı için 8. haftadaki ilk tur sunumuna kadar en azından grup ve harcama ekranları çalışır durumda olmalı.
 
@@ -108,16 +107,17 @@ Beş faz ve üç kapı var: çekirdek sürüm (22 Kasım), özellik dondurma (25
 
 - [x] Kapsam ve iş planı dokümanı, organizasyon şeması (Enes Çelik)
 - [x] Proje adı: CoTab; public GitHub deposu (enescelik00/CoTab) ve README
-- [x] Teknoloji kararı: Flutter + Dart
-- [ ] Enes Yahya ve Ahmet Anıl'ın collaborator olarak eklenmesi
-- [ ] Flutter proje iskeleti, katmanlı klasör yapısı (features/ altında modül bazlı), flutter\_lints ayarları (Enes Yahya Bodur)
+- [x] Teknoloji kararı: Flutter + Dart, sade kod (setState, sqflite, Navigator)
+- [x] Flutter proje iskeleti: klasör yapısı, DatabaseHelper (users, groups), Material 3 tema, İngilizce/Türkçe l10n, CLAUDE.md ve CHANGELOG (Enes Çelik)
+- [ ] İskeletin main'e commit edilip push edilmesi; arkadaşların klonlayıp flutter run ile denemesi
+- [ ] Enes Yahya ve Ahmet Anıl'ın collaborator olarak eklenmesi, ardından main'in korumaya alınması
 - [ ] Firebase projesi, Auth ve Firestore kurulumu (Ahmet Anıl Çay)
 - [ ] Figma'da 8–10 ekranlık tel kafes: giriş, grup listesi, grup detayı, harcama ekle, fiş tara, bakiyeler, nöbet, alışveriş listesi (herkes)
 
 ### Faz 1 — Çekirdek MVP (2–22 Kasım, vize dönemi dahil)
 
-- drift (SQLite) şeması ve repository katmanı (Enes Çelik)
-- Grup oluşturma, davet kodu ve QR ile katılma (Ahmet Anıl Çay)
+- group\_members, expenses ve expense\_shares tablolarının DatabaseHelper'a eklenmesi; model sınıfları (toMap/fromMap) (Enes Çelik)
+- Grup oluşturma ve davet koduyla katılma (Ahmet Anıl Çay)
 - Harcama ekleme, eşit/yüzde/tutar bölüştürme, bakiye ekranı (Enes Çelik)
 - Kayıt ve giriş, Firestore'a temel senkron (Ahmet Anıl Çay)
 - Kamera ekranı ve ML Kit ile ham metin çıkarma denemesi (Enes Yahya Bodur)
@@ -131,7 +131,8 @@ Beş faz ve üç kapı var: çekirdek sürüm (22 Kasım), özellik dondurma (25
 - Borç sadeleştirme algoritması, birim testleri, "ödeme yaptım" akışı (Enes Çelik)
 - Nöbet çizelgesi, rotasyon ve hatırlatma bildirimleri (Ahmet Anıl Çay)
 - Ortak alışveriş listesi, gerçek zamanlı güncelleme (Ahmet Anıl Çay)
-- Türkçe dil desteği (flutter\_localizations + ARB dosyaları) (herkes, kendi ekranları için)
+- QR ile gruba katılma: qr\_flutter ile kod üretme, mobile\_scanner ile okuma (Ahmet Anıl Çay)
+- Türkçe çevirilerin gözden geçirilmesi; her metin baştan iki ARB dosyasına da yazıldığı için ayrı bir kurulum gerekmez (herkes, kendi ekranları için)
 
 ### Faz 3 — Entegrasyon ve cila (14–25 Aralık)
 
@@ -162,7 +163,7 @@ Dokuz maddenin sekizi zorunlu; hepsi yukarıdaki fazlara bağlandı.
 | 3 | Public GitHub, herkes katkıcı, kişi başı en az %5 kod | github.com/enescelik00/CoTab; her üye kendi modülünde PR açar | Depo açık, collaborator ve ilk commit'ler bekliyor |
 | 4 | Haftalık ilerleme raporu ve sırayla sunum | Haftalık rutin bölümündeki şablon | Her hafta |
 | 5 | Halkla ilişkiler sorumlusu ve tanıtım | Ahmet Anıl Çay; blog, YouTube, LinkedIn takvimi | İlk paylaşım ilk tur sunumuyla |
-| 6 | SQLite ve/veya uzak sunucu | İkisi birden: drift (SQLite) + Cloud Firestore | Faz 1 |
+| 6 | SQLite ve/veya uzak sunucu | İkisi birden: sqflite (SQLite) + Cloud Firestore | Faz 1 |
 | 7 | Ara prototip, final sunumu, final videosu | Kapı 1 (çekirdek sürüm) ve Kapı 3 | 22 Kasım, son ders |
 | 8 | Proje raporu, süreçteki tüm dosyalar dahil | Tüm dokümanlar repo içinde /docs klasöründe | Faz 4 |
 | 9 | (Opsiyonel) Mağazada yayın | Play Store kapalı test | Zaman kalırsa |
@@ -191,8 +192,9 @@ Haftada bir 30 dakikalık toplantı ve sabit bir rapor şablonu, hem ilerleme su
 **GitHub iş akışı:**
 
 - main korumalı; doğrudan push yok, yalnızca PR ile birleştirme
-- Branch adı: feature/fis-tarama, fix/bakiye-yuvarlama gibi
-- Commit mesajı: feat:, fix:, docs:, test: önekleri
+- Branch adı İngilizce: feature/receipt-scan, fix/balance-rounding gibi
+- Commit mesajı: feat:, fix:, docs:, test:, refactor: önekleri
+- Her PR docs/CHANGELOG.md'ye kısa bir kayıt ekler
 - Her Issue'da sorumlu, etiket (modül) ve hedef faz (milestone)
 - Görevler GitHub Projects panosunda: Yapılacak, Devam ediyor, İncelemede, Bitti
 
@@ -214,7 +216,7 @@ En büyük iki risk kapsamın şişmesi ve fiş okumanın beklenenden zayıf ç�
 | --- | --- | --- |
 | Kapsam şişmesi, üç uygulamayı birden yetiştirememek | Yüksek | Katman sırası sabit: MVP bitmeden v1'e geçilmez; opsiyoneller yalnızca Kapı 2'den önce boş zaman varsa |
 | Buruşuk/soluk termal fişte OCR kalemleri yanlış eşleştiriyor | Yüksek | Önce yalnızca TOPLAM ve tarih otomatik; kalemler onay ekranında düzeltilebilir; kırpma ve kontrast ön işleme |
-| Senkron çakışmaları ve veri kaybı | Orta | sync\_queue, yumuşak silme, son yazan kazanır; Faz 3'te uçak modu testleri |
+| Senkron çakışmaları ve veri kaybı | Orta | sync\_queue tablosu, yumuşak silme, son yazan kazanır; Faz 3'te uçak modu testleri |
 | Üyelerin zamanı kısıtlı (iş, staj, diğer dersler) | Orta | Haftalık küçük görevler; tıkanan görev 3 gün içinde PM'e bildirilir ve yeniden dağıtılır |
 | Bir üyenin kod katkısının %5'in altında kalması | Orta | Modül sahipliği; PM her hafta GitHub Insights'ı kontrol eder |
 | Firebase ücretsiz kota veya yapılandırma sorunları | Düşük | Spark planı bu ölçek için yeterli; okuma sayısını azaltmak için yerel önbellek zaten SQLite |
@@ -224,11 +226,14 @@ En büyük iki risk kapsamın şişmesi ve fiş okumanın beklenenden zayıf ç�
 
 Vize döneminde tempo düşük olacak; amaç 8. haftadaki ilk tur sunumuna depoyu dolu ve birkaç ekranı çalışır halde götürmek.
 
-- [ ] Kapsam ve iş planı dokümanını hocaya gönder (Enes Çelik)
-- [ ] Enes Yahya ve Ahmet Anıl'ı GitHub'da collaborator olarak ekle; README'yi depoya yükle (Enes Çelik)
-- [ ] Üç kişide aynı Flutter sürümüyle kurulum; flutter create ile iskeleti main'e gönder (Enes Yahya Bodur)
-- [ ] Firebase projesini aç, FlutterFire ile bağla; config dosyalarını .gitignore'a ekle (Ahmet Anıl Çay)
-- [ ] drift şeması: users, groups, group\_members, expenses, expense\_shares (Enes Çelik)
+- [x] Kapsam ve iş planı dokümanını hocaya gönder (Enes Çelik)
+- [ ] İlk haftalık raporda iş planından farkları bildir: iskeletin sahibi ve sadeleştirilen teknik yığın (Enes Çelik)
+- [ ] İskeleti main'e commit edip push et (Enes Çelik)
+- [ ] Enes Yahya ve Ahmet Anıl'ı GitHub'da collaborator olarak ekle, main'i korumaya al (Enes Çelik)
+- [ ] Projeyi klonla, flutter pub get ve flutter run ile kurulumu doğrula (Enes Yahya Bodur, Ahmet Anıl Çay)
+- [ ] Firebase projesini aç, FlutterFire ile bağla; ayrı branch'te PR aç (Ahmet Anıl Çay)
+- [ ] Kamera ekranı ve ML Kit ile ham metin denemesi; ayrı branch'te PR aç (Enes Yahya Bodur)
+- [ ] DatabaseHelper'a group\_members, expenses ve expense\_shares tablolarını ekle; model sınıflarını yaz (Enes Çelik)
 - [ ] GitHub Projects panosunu aç, Faz 1 görevlerini Issue olarak gir (Enes Çelik)
 - [ ] Figma'da en az 4 ana ekranın tel kafesi: grup detayı, harcama ekle, fiş tara, bakiyeler (herkes)
 - [ ] İlk tur sunumu slaytları: problem, çözüm, Splitwise'tan farkı, kapsam, ekip, iş planı, ekran görüntüleri (8. hafta öncesi)

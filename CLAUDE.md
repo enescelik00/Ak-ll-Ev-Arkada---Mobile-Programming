@@ -48,6 +48,8 @@ After editing an `.arb` file, `flutter run` or `flutter pub get` regenerates `li
 - Every screen lives in its own file in `lib/screens/`. When a file gets too long, split it into small widgets.
 - Code and variable names are in English. Add short comments only where the code is hard to understand.
 - Store money amounts as `int` in kuruş (e.g. 12.50 TL is `1250`). Never use `double` for money.
+- IDs are `TEXT`: the Firebase Auth `uid` for users, a Firestore-generated ID for everything else.
+- Every table except `sync_queue` has `updated_at INTEGER NOT NULL` and `deleted_at INTEGER` (milliseconds since epoch, `DateTime.now().millisecondsSinceEpoch`). Update `updated_at` on every change. Never `DELETE` a row; set `deleted_at` instead and filter with `WHERE deleted_at IS NULL`.
 - Navigate between screens with `Navigator.push`.
 - Every user-facing text goes into both `app_en.arb` and `app_tr.arb`; read it with `AppLocalizations.of(context)!`.
 

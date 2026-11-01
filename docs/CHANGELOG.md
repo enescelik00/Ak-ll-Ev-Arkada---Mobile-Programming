@@ -13,6 +13,16 @@ Entry format:
 
 ---
 
+## 2026-11-01 — Sync columns and roadmap decisions (Enes Çelik)
+
+- Added `updated_at` and `deleted_at` (INTEGER, milliseconds since epoch) to the `users` and `groups` tables. Every future table except `sync_queue` gets them too: the newer `updated_at` wins when syncing, and rows are soft-deleted with `deleted_at`.
+- QR invites moved from the MVP to Phase 2. The MVP uses invite codes only.
+- Receipt images stay on the phone that scanned them for now; no Firebase Storage.
+- Branch names are in English (`feature/receipt-scan`). The roadmap now lists `refactor:` as a commit type, like the README.
+- README: updated the tech stack (setState, Navigator, sqflite, local notifications) and the team table, and added the changelog rule.
+- Roadmap: the project skeleton is now listed under Enes Çelik; the Phase 2 Turkish item became "review the Turkish translations".
+- Roadmap: noted how the plan now differs from the scope and work plan document sent to the instructor (skeleton owner, simpler tech stack); these are reported in the first weekly report.
+
 ## 2026-11-01 — Project skeleton (Enes Çelik)
 
 - Created the Flutter project: name `cotab`, package id `io.github.enescelik00.cotab`, Android and iOS only. The app is shown as "CoTab" on both platforms.
